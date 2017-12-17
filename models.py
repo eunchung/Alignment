@@ -6,6 +6,7 @@ from torch.autograd import Variable
 
 import sys
 import numpy
+import math
 
 
 # BiRNN Model (Many-to-One)
@@ -109,21 +110,20 @@ class Cha_CNN_LSTM(nn.Module):
 
 
 class Siamese_CNN(nn.Module):
-    def __init__(self, vocab_size, num_classes, embedding_size=100, max_sequence_length = 30, kernel_size = 3):
+    def __init__(self, vocab_size, num_classes, embedding_size=100, max_sequence_length = 30, kernel_size = 3, kernel_num=32):
         super(Siamese_CNN, self).__init__()
         self.max_sequence_length = max_sequence_length
         self.kernel_size = kernel_size
         
-        # 90% 이상 꾸준히 나옴 ㅋ 이 셋팅은. learning rate 0.003 필요.
         self.layer1 = nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=5, padding=2),
+            nn.Conv2d(1, math.floor(kernel_num/2), kernel_size=5, padding=2),
             nn.ReLU(),
             nn.AvgPool2d((3,1), stride=1))
         self.layer2 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=5, padding=2),
+            nn.Conv2d(math.floor(kernel_num/2), kernel_num, kernel_size=5, padding=2),
             nn.ReLU(),
-            nn.AvgPool2d((28,1), stride=1))
-        self.LogisticRegression = nn.Linear(32*1*embedding_size*2, num_classes)
+            nn.AvgPool2d((kernel_num-4,1), stride=1))
+        self.LogisticRegression = nn.Linear(kernel_num*1*embedding_size*2, num_classes)
 
         # ABCNN 논문에서 BCNN 의 네트웍 구조를 빌림.
         # self.layer1 = nn.Sequential(

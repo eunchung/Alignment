@@ -25,7 +25,7 @@ test_data=test_500samples.txt
 #embedding_size=300
 #hidden_size=256
 dropout=0
-for hidden_size in {100..500..100}
+for hidden_size in {200..500..100}
 do
 	echo hidden_size: $hidden_size
 	for embedding_size in {100..500..100}

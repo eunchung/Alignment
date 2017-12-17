@@ -38,15 +38,15 @@ word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, characte
 def model(x):
     return {
         'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
-        'CNN': CNN(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate),
-        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate),
+        'CNN': CNN(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, kernel_num=hidden_size),
+        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, kernel_num =hidden_size),
         'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
-        'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size),
+        'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size, kernel_num = hidden_size),
     }.get(x)
 
 model = model(model_name)
 model.cuda()
-
+#print(model)
 
 if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM'] :
     train_dataset = AlignmentDataset(train_data_path, word_to_ix, batch_size)

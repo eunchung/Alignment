@@ -46,7 +46,6 @@ else:
 
 encoder = encoder.cuda()
 decoder = decoder.cuda()
-
 print(encoder)
 print(decoder)
 

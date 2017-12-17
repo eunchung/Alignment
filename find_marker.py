@@ -45,9 +45,7 @@ def model(x):
 model = model(model_name)
 model.cuda()
 model.load_state_dict(torch.load('./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, embedding_size, hidden_size, dropout_rate, accuracy)))
-
 print(model)
-
 
 # Predict whether tweet-reply pair is alignment or not
 correct = 0
