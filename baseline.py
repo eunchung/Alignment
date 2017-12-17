@@ -38,7 +38,7 @@ def marker_set(x):
         '2': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no'],
         '3': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay'],
         '4': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay', 'siempre', 'nunca', 'y','pero','así'],
-        '5': [],
+        '5': [asdfasdf],
     }.get(x)
 
 alignment_markers = marker_set(alignment_marker_type)
