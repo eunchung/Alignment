@@ -1,0 +1,32 @@
+1. 엑셀에서 txt 로 가져오는 것
+엑셀은 3열 데이터. 엑셀데이터를 서브라임에 txt 로가져올때, 열끼리는 자동으로 탭으로 나눠져서 저장이 됨
+
+탭인지 아닌지는 서브라임에서 드래그를 해보면 암.
+그냥 띄어쓰기는 글자와 글자사이에 점이 보이지만, 탭은 선으로 보임
+ex) 띄어쓰기 . . . . 
+탭 .	.	.	.	.	
+
+엑셀 파일 띄워서, ctrl A 로 데이터부분만 선택한 다음에 복사해서
+sublime 에 빈 파일을 열고 거기다가 엑셀을 복사 붙여넣기
+
+
+2. 가져온 파일을 랜덤하게 test data 랑 train data 로 나누기.
+python split_train_test.py 데이터이름
+
+그 결과 train_데이터이름 // test_데이터이름 이 생김
+
+
+3. 모델 학습
+python main.py train_데이터이름 test_데이터이름 모델명 엠베딩차원 드랍아웃rate 러닝rate 순으로 입력하면됨.
+
+python main.py train_train_new.txt test_train_new.txt CNN 100 0 0.003
+python main.py train_train_new.txt test_train_new.txt CNN 300 0 0.003
+
+python main.py train_train_new.txt test_train_new.txt BiLSTM 100 0 0.003
+python main.py train_train_new.txt test_train_new.txt BiLSTM 300 0 0.003
+python main.py train_train_new.txt test_train_new.txt BiLSTM 300 0.2 0.003
+
+
+4. 결과는 models 폴더안에 자동으로 저장됨
+정확도, 모델이름, 워드엠베딩 차원, 드랍아웃rate, 러닝 rate 순으로 적혀있음.
+Acc100.00_CNN_emb300_D0.00_LR0.00300
