@@ -24,7 +24,6 @@ batch_size = 50
 num_epochs = 100
 learning_rate = 0.001 #float(sys.argv[6]) #0.003
 dropout_rate = float(sys.argv[7]) #0
-word_dropout_rate = 0
 
 train_data_path = sys.argv[1] 
 test_data_path = sys.argv[2] 
@@ -38,11 +37,11 @@ word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, characte
 #word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=True)
 num_classes = vocab_size
 
-encoder = EncoderRNN(vocab_size, embedding_size, hidden_size, num_layers, word_dropout_rate, dropout_rate)
+encoder = EncoderRNN(vocab_size, embedding_size, hidden_size, num_layers, dropout_rate)
 if decoder_name == 'AttDEC':
     decoder = AttnDecoderRNN(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate)
 else:
-    decoder = DecoderRNN(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate)
+    decoder = DecoderRNN(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate)
 
 encoder = encoder.cuda()
 decoder = decoder.cuda()
@@ -248,7 +247,7 @@ with open('./result/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_tfr%0.1f_generation
         w.write('Target_sentence: \t' + ' '.join(sentence_2)+'\n')
         w.write('Generated_sentence: \t' + ' '.join(predicted)+'\n')
     
-    w.write('[setting] : '+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\tWD\t'+str(word_dropout_rate)+'\n')
+    w.write('[setting] : '+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
     w.write('saved to ./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_tfr%0.1f_best_valid_loss.pkl\n' % (encoder_name, embedding_size, hidden_size, dropout_rate, teacher_forcing_ratio))
     w.write('saved to ./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_tfr%0.1f_best_valid_loss.pkl\n' % (decoder_name, embedding_size, hidden_size, dropout_rate, teacher_forcing_ratio))
     w.write('-'*100+'\n\n')

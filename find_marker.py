@@ -23,7 +23,6 @@ batch_size = 1
 num_epochs = 30
 learning_rate = 0.001
 dropout_rate = float(sys.argv[7]) #0
-word_dropout_rate = 0
 
 train_data_path = 'train_500samples.txt' 
 unlabeled_data_path = sys.argv[1]  # preprocessed_10000unlabeled.txt
@@ -35,10 +34,10 @@ word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, characte
 
 def model(x):
     return {
-        'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
-        'CNN': CNN(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate),
-        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate),
-        'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
+        'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
+        'CNN': CNN(vocab_size, embedding_size, num_classes, dropout_rate),
+        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, dropout_rate),
+        'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
         'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size),
     }.get(x)
 

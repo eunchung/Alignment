@@ -21,10 +21,9 @@ hidden_size = int(sys.argv[7])#256
 num_layers = 2
 num_classes = 2
 batch_size = 50
-num_epochs = 50
+num_epochs = 30
 learning_rate = 0.001 #float(sys.argv[6]) #0.003
 dropout_rate = float(sys.argv[8]) #0
-word_dropout_rate = 0
 
 train_data_path = sys.argv[1]
 valid_data_path = sys.argv[2]
@@ -37,10 +36,10 @@ word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, characte
 
 def model(x):
     return {
-        'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
-        'CNN': CNN(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, kernel_num=hidden_size),
-        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, kernel_num =hidden_size),
-        'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate),
+        'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
+        'CNN': CNN(vocab_size, embedding_size, num_classes, dropout_rate, kernel_num=hidden_size),
+        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, dropout_rate, kernel_num =hidden_size),
+        'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
         'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size, kernel_num = hidden_size),
     }.get(x)
 
@@ -69,6 +68,7 @@ print('length of test dataset', len(test_dataset))
 loss_function = nn.CrossEntropyLoss() # = log softmax + NLL loss
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+print_every = (len(train_dataset)/2)*2
 losses = 0
 keep_valid_loss = 1e06
 keep_valid_accuracy= 0
@@ -88,7 +88,7 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
             optimizer.step()
             losses += loss.data[0]
 
-            if ((i+1)+epoch*len(train_dataset)) % (len(train_dataset)/2*1) == 0:
+            if ((i+1)+epoch*len(train_dataset)) % print_every == 0:
                 # valid set test
                 valid_loss = 0
                 valid_correct = 0
@@ -141,7 +141,7 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
             optimizer.step()
             losses += loss.data[0]
 
-            if ((i+1)+epoch*len(train_dataset)) % (len(train_dataset)/2*1) == 0:
+            if ((i+1)+epoch*len(train_dataset)) % print_every == 0:
                 # valid set test
                 valid_loss = 0
                 valid_correct = 0
@@ -222,7 +222,7 @@ if not os.path.exists('./result/'+directory_name):
 
 with open('./result/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt' % (model_name, embedding_size, hidden_size, dropout_rate, 100 * correct / total), 'a', encoding ='utf-8') as w:
 
-    w.write('[setting]: '+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\tWD\t'+str(word_dropout_rate)+'\n')
+    w.write('[setting]: '+'\tbatch_size\t'+str(batch_size)+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
     w.write('[Test Accuracy of the model]: %0.2f %% \n' % (100 * correct / total)) 
     w.write('[saved to]: ./models/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.pkl\n' % (model_name, embedding_size, hidden_size, dropout_rate, 100 * correct / total))
     torch.save(model.state_dict(), './models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, embedding_size, hidden_size, dropout_rate, 100 * correct / total))

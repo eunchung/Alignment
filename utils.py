@@ -6,10 +6,6 @@ from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-import nltk
-from nltk.tokenize.toktok import ToktokTokenizer
-toktok = ToktokTokenizer()
-
 import sys
 import numpy
 import os.path
@@ -34,7 +30,7 @@ def unicodeToAscii(s):
 #print(unicodeToAscii('Ślusàrski'))
 
 def make_or_load_dict(train_data_path, character=False):
-    something_to_ix = 'word_to_ix_' if not character else 'character_to_ix_'
+    something_to_ix = 'word_to_ix_' if not character else 'character_to_ix_' # 케릭터래벨은, 데이터 저장시에 케릭터 단위로하면 되도록 해둠.
 
     if not os.path.exists('./vocab'):
         os.makedirs('./vocab')
@@ -52,10 +48,7 @@ def make_or_load_dict(train_data_path, character=False):
         with open(train_data_path, 'r', encoding ='utf-8') as data:
             for line in data.readlines():
                 sentence_1, sentence_2, label = line.lower().strip().split('\t')
-                if character:
-                    word_list = toktok.tokenize(list(' '.join(nltk.word_tokenize(sentence_1+' '+sentence_2))))
-                else:
-                    word_list = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1+' '+sentence_2)))
+                word_list = (sentence_1+' '+sentence_2).split()
                 for word in word_list:
                     if word not in word_to_ix:
                         word_to_ix[word] = len(word_to_ix)
@@ -121,7 +114,7 @@ class AlignmentDataset(Dataset):
             self.line = self.data[index*self.batch_size + i]
             sentence_1, sentence_2, label = self.line.lower().strip().split('\t')
             
-            self.sentence = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1+' '+sentence_2)))
+            self.sentence = (sentence_1+' '+sentence_2).split()
             self.sentence_tensor = prepare_sequence(self.sentence, self.word_to_ix)
             seq_lengths.append(len(self.sentence))
             vectorized_seqs.append(self.sentence_tensor)
@@ -156,12 +149,12 @@ class AlignmentDataset_seperate_sent(Dataset):
             self.line = self.data[index*self.batch_size + i]
             sentence_1, sentence_2, label = self.line.lower().strip().split('\t')
 
-            self.sentence_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1)))
+            self.sentence_1 = sentence_1.split()
             self.sentence_1_tensor = prepare_sequence(self.sentence_1, self.word_to_ix)
             seq_lengths_1.append(len(self.sentence_1))
             vectorized_seqs_1.append(self.sentence_1_tensor)
 
-            self.sentence_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_2)))
+            self.sentence_2 = sentence_2.split()
             self.sentence_2_tensor = prepare_sequence(self.sentence_2, self.word_to_ix)
             seq_lengths_2.append(len(self.sentence_2))
             vectorized_seqs_2.append(self.sentence_2_tensor)
@@ -191,8 +184,7 @@ class AlignmentDataset_cha_cnn(Dataset):
         self.line = self.data[index]
         sentence_1, sentence_2, label = self.line.lower().strip().split('\t')
         
-        self.sentence = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1+' '+sentence_2)))
-
+        self.sentence = (sentence_1+' '+sentence_2).split()
         self.sentence = [prepare_sequence(list(word), character_to_ix) for word in self.sentence]
         self.label = prepare_label(label, label_to_ix)
 
@@ -220,12 +212,12 @@ class GenerateDataset(Dataset):
             self.line = self.data[index*self.batch_size + i]
             sentence_1, sentence_2, label = self.line.lower().strip().split('\t')
 
-            self.sentence_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1)))
+            self.sentence_1 = sentence_1.split()
             self.sentence_1_tensor = prepare_sequence(self.sentence_1, self.word_to_ix)
             seq_lengths_1.append(len(self.sentence_1))
             vectorized_seqs_1.append(self.sentence_1_tensor)
 
-            self.sentence_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_2)))
+            self.sentence_2 = sentence_2.split()
             self.sentence_2_tensor = prepare_sequence(self.sentence_2, self.word_to_ix)
             seq_lengths_2.append(len(self.sentence_2))
             vectorized_seqs_2.append(self.sentence_2_tensor)

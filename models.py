@@ -11,11 +11,9 @@ import math
 
 # BiRNN Model (Many-to-One)
 class BiLSTM(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(BiLSTM, self).__init__()
-        self.word_dropout_rate = word_dropout_rate
         self.hidden_size = hidden_size
-        self.word_dropout = nn.Dropout(p=word_dropout_rate)
         self.vertical_dropout = nn.Dropout(p=dropout_rate)
 
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
@@ -25,10 +23,6 @@ class BiLSTM(nn.Module):
         self.fc = nn.Linear(self.hidden_size*2, num_classes)  # 2 for bidirection 
     
     def forward(self, sentence, train = True):
-        if train:
-            sentence = self.word_dropout(sentence) * (1 - self.word_dropout_rate)
-        sentence = sentence.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
-
         embeds = self.word_embedding(sentence)
         if train:
             embeds = self.vertical_dropout(embeds)
@@ -50,21 +44,35 @@ class BiLSTM(nn.Module):
 
 
 class CNN(nn.Module):
-    def __init__(self, vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, Ci = 1, kernel_num = 100, \
+    def __init__(self, vocab_size, embedding_size, num_classes, dropout_rate, Ci = 1, kernel_num = 100, \
         kernel_sizes=[3,4,5]):
         super(CNN, self).__init__()
-        self.word_dropout_rate = word_dropout_rate
-        self.word_dropout = nn.Dropout(word_dropout_rate) 
         self.embed = nn.Embedding(vocab_size, embedding_size)
         self.padding = nn.ReflectionPad2d((0,0,1,1))
         self.convs1 = nn.ModuleList([nn.Conv2d(Ci, kernel_num, (K, embedding_size)) for K in kernel_sizes])
         self.dropout = nn.Dropout(dropout_rate)
+        self.highway_t = nn.Linear(len(kernel_sizes)*kernel_num, len(kernel_sizes)*kernel_num) # square matrix
+        self.highway_g = nn.Linear(len(kernel_sizes)*kernel_num, len(kernel_sizes)*kernel_num) # square matrix
         self.fc1 = nn.Linear(len(kernel_sizes)*kernel_num, num_classes)
 
+    def highway(self, input_, num_layers=1, bias=-2.0):
+        """Highway Network (cf. http://arxiv.org/abs/1505.00387).
+        borrowed from https://github.com/mkroutikov/tf-lstm-char-cnn
+        t = sigmoid(Wy + b)
+        z = t * g(Wy + b) + (1 - t) * y
+        where g is nonlinearity, t is transform gate, and (1 - t) is carry gate.
+        """
+        for idx in range(num_layers):
+            t = F.sigmoid(self.highway_t(input_) + bias)
+            g = F.relu(self.highway_g(input_))
+
+            output = t * g + (1. - t) * input_
+            input_ = output
+
+        return output
+
+
     def forward(self, x, train = True):
-        if train:
-            x = self.word_dropout(x.float()) * (1 - self.word_dropout_rate)
-        x = x.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
         x = self.embed(x) # (N,W,D)
 
         x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
@@ -73,6 +81,8 @@ class CNN(nn.Module):
         x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x] #[(N,Co), ...]*len(Ks)
         x = torch.cat(x, 1)
 
+        x = self.highway(x, 1, 0)
+
         if train:
             x = self.dropout(x) # (N,len(Ks)*Co)
         logit = self.fc1(x) # (N,C)
@@ -80,11 +90,9 @@ class CNN(nn.Module):
 
 
 class Cha_CNN_LSTM(nn.Module):
-    def __init__(self, vocab_size, embedding_size, num_classes, word_dropout_rate, dropout_rate, Ci = 1, kernel_num = 100, \
+    def __init__(self, vocab_size, embedding_size, num_classes, dropout_rate, Ci = 1, kernel_num = 100, \
         kernel_sizes=[3,4,5]):
         super(Cha_CNN_LSTM, self).__init__()
-        self.word_dropout_rate = word_dropout_rate
-        self.word_dropout = nn.Dropout(word_dropout_rate) 
         self.embed = nn.Embedding(vocab_size, embedding_size)
         self.padding = nn.ReflectionPad2d((0,0,1,1))
         self.convs1 = nn.ModuleList([nn.Conv2d(Ci, kernel_num, (K, embedding_size)) for K in kernel_sizes])
@@ -92,9 +100,6 @@ class Cha_CNN_LSTM(nn.Module):
         self.fc1 = nn.Linear(len(kernel_sizes)*kernel_num, num_classes)
 
     def forward(self, x, train = True):
-        if train:
-            x = self.word_dropout(x) * (1 - self.word_dropout_rate)
-        x = x.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
         x = self.embed(x) # (N,W,D)
 
         x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
@@ -162,11 +167,9 @@ class Siamese_CNN(nn.Module):
 
 # Siamese_BiLSTM Model (Many-to-One)
 class Siamese_BiLSTM(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(Siamese_BiLSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.word_dropout_rate = word_dropout_rate
-        self.word_dropout = nn.Dropout(p=word_dropout_rate)
         self.vertical_dropout = nn.Dropout(p=dropout_rate)
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
 
@@ -177,10 +180,6 @@ class Siamese_BiLSTM(nn.Module):
 
     
     def siamese(self, sentence, train = True):
-        if train:
-            sentence = self.word_dropout(sentence) * (1 - self.word_dropout_rate)
-        sentence = sentence.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
-
         embeds = self.word_embedding(sentence)
         if train:
             embeds = self.vertical_dropout(embeds)
@@ -211,11 +210,9 @@ class Siamese_BiLSTM(nn.Module):
 
 
 class EncoderRNN(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, word_dropout_rate, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, dropout_rate):
         super(EncoderRNN, self).__init__()
-        self.word_dropout_rate = word_dropout_rate
         self.hidden_size = hidden_size
-        self.word_dropout = nn.Dropout(p=word_dropout_rate)
         self.vertical_dropout = nn.Dropout(p=dropout_rate)
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
 
@@ -223,10 +220,6 @@ class EncoderRNN(nn.Module):
         self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers, batch_first=True, bidirectional=True) 
     
     def forward(self, sentence, init_hidden, train = True):
-        if train:
-            sentence = self.word_dropout(sentence) * (1 - self.word_dropout_rate)
-        sentence = sentence.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
-        
         embeds = self.word_embedding(sentence)
         
         if train:
@@ -245,11 +238,9 @@ class EncoderRNN(nn.Module):
 
 
 class DecoderRNN(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, word_dropout_rate, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(DecoderRNN, self).__init__()
-        self.word_dropout_rate = word_dropout_rate
         self.hidden_size = hidden_size
-        self.word_dropout = nn.Dropout(p=word_dropout_rate)
         self.vertical_dropout = nn.Dropout(p=dropout_rate)
 
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
@@ -260,10 +251,6 @@ class DecoderRNN(nn.Module):
         self.fc = nn.Linear(self.hidden_size, num_classes)  # 2 for bidirection 
     
     def forward(self, sentence, hidden, train = True):
-        if train:
-            sentence = self.word_dropout(sentence) * (1 - self.word_dropout_rate)
-        sentence = sentence.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
-        
         embeds = self.word_embedding(sentence)
         
         if train:
