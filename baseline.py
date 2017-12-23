@@ -10,6 +10,7 @@ import sys
 import numpy
 import unicodedata
 import string
+import os
 
 import nltk
 from nltk.tokenize.toktok import ToktokTokenizer
@@ -38,7 +39,12 @@ def marker_set(x):
         '2': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no'],
         '3': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay'],
         '4': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay', 'siempre', 'nunca', 'y','pero','así'],
-        '5': [asdfasf],
+        'd1': ['que', 'de', 'y', 'a', 'la'],
+        'd2': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo'],
+        'd3': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por'],
+        'd4': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por', 'con', 'sí', 'me', 'si', 'para'],
+        'd5': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por', 'con', 'sí', 'me', 'si', 'para', 'yo', 'más', 'como', 'preo', 'una', \
+                'tu', 'mi', 'las', 'del', 'ya', 'al', 'gracias', 'su', 'muy', 'son', 'o', 'eso', 'todo', 'le', 'hay', 'día', 'este', 'ser', 'mas', 'nos', 'esto', 'todos', 'tiene', 'bien', 'así'],
     }.get(x)
 
 alignment_markers = marker_set(alignment_marker_type)
@@ -53,7 +59,7 @@ if not os.path.exists('./result'):
 if not os.path.exists('./result/'+directory_name):
     os.makedirs('./result/'+directory_name)
 
-with open('./result/'+directory_name+'/baseline_makrer_%d.txt'%int(alignment_marker_type), 'w', encoding ='utf-8') as w, open(test_data_path, 'r', encoding ='utf-8') as test_data:
+with open('./result/'+directory_name+'/baseline_makrer_%s.txt'%alignment_marker_type, 'w', encoding ='utf-8') as w, open(test_data_path, 'r', encoding ='utf-8') as test_data:
 
     for line in test_data.readlines():
         sentence_1, sentence_2, label = line.lower().strip().split('\t')

@@ -101,8 +101,8 @@ class TwitterClient(object):
 def main():
     # creating object of TwitterClient Class
     api = TwitterClient()
-    count = 1000
-    query = 'RT'
+    count = 100
+    query = 'RT' #independencia'
     RT_number = 100
     
     if not os.path.exists('./data/tweet/crawled'):
@@ -124,7 +124,7 @@ def main():
 
             for tweet in tweets:
                 query_reply = tweet['raw_text'].split()[1][:-1]
-                replies = api.get_replies(query_reply, tweet['tweet_id'],1000)
+                replies = api.get_replies(query_reply, tweet['tweet_id'],100)
 
                 if replies:
                     w.write(tweet['raw_text']+'\n')

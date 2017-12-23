@@ -19,9 +19,12 @@ echo -n "tyep [directory name]: "
 read directory_name
 echo directory_name: $directory_name
 
-train_data=train_500samples.txt
-valid_data=valid_500samples.txt
-test_data=test_500samples.txt
+train_data=train_acc_tw.txt
+#valid_data=valid_acc_tw.txt
+#test_data=test_acc_tw.txt
+valid_data=test_acc_tw.txt
+test_data=valid_acc_tw.txt
+
 #embedding_size=300
 #hidden_size=256
 dropout=0

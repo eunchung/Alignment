@@ -21,7 +21,7 @@ hidden_size = int(sys.argv[7])#256
 num_layers = 2
 num_classes = 2
 batch_size = 50
-num_epochs = 10
+num_epochs = 50
 learning_rate = 0.001 #float(sys.argv[6]) #0.003
 dropout_rate = float(sys.argv[8]) #0
 word_dropout_rate = 0
@@ -91,27 +91,43 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
             if ((i+1)+epoch*len(train_dataset)) % (len(train_dataset)/2*1) == 0:
                 # valid set test
                 valid_loss = 0
-                correct = 0
-                total = 0 
+                valid_correct = 0
+                valid_total = 0 
                 for sentence, label in valid_loader:
                     output = model(Variable(sentence.view(1, -1)).cuda(), train=False)
                     loss = loss_function(output, Variable(label.view(1)).cuda()) 
                     valid_loss += loss.data[0]
 
                     _, predicted = torch.max(output.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
-                    total += label.size(0)
-                    correct += (predicted.cpu() == label).sum()
+                    valid_total += label.size(0)
+                    valid_correct += (predicted.cpu() == label).sum()
+                valid_accuracy = (100 * valid_correct / valid_total)
+                
+                # test set test
+                test_loss = 0
+                test_correct = 0
+                test_total = 0 
+                for sentence, label in test_loader:
+                    output = model(Variable(sentence.view(1, -1)).cuda(), train=False)
+                    loss = loss_function(output, Variable(label.view(1)).cuda()) 
+                    test_loss += loss.data[0]
 
+                    _, predicted = torch.max(output.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
+                    test_total += label.size(0)
+                    test_correct += (predicted.cpu() == label).sum()
+                test_accuracy = (100 * test_correct / test_total)
 
-                if valid_loss < keep_valid_loss:
-                    keep_valid_loss = valid_loss
+                if valid_accuracy > keep_valid_accuracy:
+                    keep_valid_accuracy = valid_accuracy
+                # if valid_loss < keep_valid_loss:
+                #     keep_valid_loss = valid_loss
                     torch.save(model.state_dict(), './models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_best_valid_loss.pkl' % (model_name, embedding_size, hidden_size, dropout_rate))
-                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid loss: %.4f, valid accuracy: %0.2f %% <saved model>' 
-                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, (100 * correct / total)))   
+                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid_L: %.4f, Valid_ACC: %0.2f %%, test_L: %.4f, test_ACC: %0.2f %% <saved model>' 
+                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
 
                 else: 
-                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid loss: %.4f, Valid accuracy: %0.2f %%' 
-                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, (100 * correct / total)))
+                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid_L: %.4f, Valid_ACC: %0.2f %%, test_L: %.4f, test_ACC: %0.2f %%' 
+                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))
                 losses = 0
 
 
@@ -128,26 +144,41 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
             if ((i+1)+epoch*len(train_dataset)) % (len(train_dataset)/2*1) == 0:
                 # valid set test
                 valid_loss = 0
-                correct = 0
-                total = 0 
-                for sentence_1, sentence_2, label in test_loader:
+                valid_correct = 0
+                valid_total = 0 
+                for sentence_1, sentence_2, label in valid_loader:
                     output = model(Variable(sentence_1.view(1, -1)).cuda(), Variable(sentence_2.view(1, -1)).cuda(), train=False)
                     loss = loss_function(output, Variable(label.view(1)).cuda()) 
                     valid_loss += loss.data[0]
 
                     _, predicted = torch.max(output.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
-                    total += label.size(0)
-                    correct += (predicted.cpu() == label).sum()
+                    valid_total += label.size(0)
+                    valid_correct += (predicted.cpu() == label).sum()
+                valid_accuracy = (100 * valid_correct / valid_total)
+
+                # test set test
+                test_loss = 0
+                test_correct = 0
+                test_total = 0 
+                for sentence_1, sentence_2, label in test_loader:
+                    output = model(Variable(sentence_1.view(1, -1)).cuda(), Variable(sentence_2.view(1, -1)).cuda(), train=False)
+                    loss = loss_function(output, Variable(label.view(1)).cuda()) 
+                    test_loss += loss.data[0]
+
+                    _, predicted = torch.max(output.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
+                    test_total += label.size(0)
+                    test_correct += (predicted.cpu() == label).sum()
+                test_accuracy = (100 * test_correct / test_total)
 
                 if valid_loss < keep_valid_loss:
                     keep_valid_loss = valid_loss
                     torch.save(model.state_dict(), './models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_best_valid_loss.pkl' % (model_name, embedding_size, hidden_size, dropout_rate))
-                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid loss: %.4f, valid accuracy: %0.2f %% <saved model>' 
-                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, (100 * correct / total)))   
+                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid_L: %.4f, Valid_ACC: %0.2f %%, test_L: %.4f, test_ACC: %0.2f %% <saved model>' 
+                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
 
                 else: 
-                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid loss: %.4f, Valid accuracy: %0.2f %%' 
-                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, (100 * correct / total)))
+                    print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, valid_L: %.4f, Valid_ACC: %0.2f %%, test_L: %.4f, test_ACC: %0.2f %%' 
+                       %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))
                 losses = 0
 
 
@@ -156,8 +187,6 @@ correct = 0
 total = 0
 
 missed_pairs = []
-# load the best valid model.
-model.load_state_dict(torch.load('./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_best_valid_loss.pkl' % (model_name, embedding_size, hidden_size, dropout_rate)))
 if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM']:
     for sentence, label in test_loader:
 
@@ -185,7 +214,6 @@ elif model_name in ['Siamese_BiLSTM','Siamese_CNN']:
 
 print('Test Accuracy of the model: %0.2f %%' % (100 * correct / total))
 
-
 # write result and save model
 if not os.path.exists('./result'):
     os.makedirs('./result')
@@ -202,3 +230,36 @@ with open('./result/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt' % (mo
     for miss in missed_pairs:
         w.write(miss)
     w.write('-'*100+'\n\n')
+
+
+
+# load the best valid model.
+model.load_state_dict(torch.load('./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_best_valid_loss.pkl' % (model_name, embedding_size, hidden_size, dropout_rate)))
+if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM']:
+    for sentence, label in test_loader:
+
+        outputs = model(Variable(sentence.view(1, -1)).cuda(), train=False)
+        _, predicted = torch.max(outputs.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
+
+        total += label.size(0) # batch 쓰는 경우.
+        if (predicted.cpu().numpy() != label.numpy()):
+            sentence = [ix_to_word[word_idx] for word_idx in sentence.long()[0][0].numpy()]
+            missed_pairs.append('label: ' + str(label.numpy()[0][0]) +'\t' + 'predicted: '+str(predicted.cpu().numpy()) + '\t' +  ' '.join(sentence)+'\n')
+        correct += (predicted.cpu() == label).sum()
+
+elif model_name in ['Siamese_BiLSTM','Siamese_CNN']:
+    for sentence_1, sentence_2, label in test_loader:
+
+        output = model(Variable(sentence_1.view(1, -1)).cuda(), Variable(sentence_2.view(1, -1)).cuda(), train=False)
+        _, predicted = torch.max(output.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
+
+        total += label.size(0) # batch 쓰는 경우.
+        if (predicted.cpu().numpy() != label.numpy()):
+            sentence_1 = [ix_to_word[word_idx] for word_idx in sentence_1.long()[0][0].numpy()]
+            sentence_2 = [ix_to_word[word_idx] for word_idx in sentence_2.long()[0][0].numpy()]
+            missed_pairs.append('label: ' + str(label.numpy()[0][0]) +'\t' + 'predicted: '+str(predicted.cpu().numpy()) + '\t' + ' '.join(sentence_1)+'\t'+' '.join(sentence_2)+'\n')
+        correct += (predicted.cpu() == label).sum()
+
+print('Test Accuracy of the best valid loss model: %0.2f %%' % (100 * correct / total))
+
+

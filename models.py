@@ -63,7 +63,7 @@ class CNN(nn.Module):
 
     def forward(self, x, train = True):
         if train:
-            x = self.word_dropout(x) * (1 - self.word_dropout_rate)
+            x = self.word_dropout(x.float()) * (1 - self.word_dropout_rate)
         x = x.long() # nn.Embedding 하기 위해 다시 int 형태로 바꿈.
         x = self.embed(x) # (N,W,D)
 
@@ -114,30 +114,20 @@ class Siamese_CNN(nn.Module):
         super(Siamese_CNN, self).__init__()
         self.max_sequence_length = max_sequence_length
         self.kernel_size = kernel_size
-        
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(1, math.floor(kernel_num/2), kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.AvgPool2d((3,1), stride=1))
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(math.floor(kernel_num/2), kernel_num, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.AvgPool2d((kernel_num-4,1), stride=1))
-        self.LogisticRegression = nn.Linear(kernel_num*1*embedding_size*2, num_classes)
 
-        # ABCNN 논문에서 BCNN 의 네트웍 구조를 빌림.
-        # self.layer1 = nn.Sequential(
-        #     nn.ReflectionPad2d((0,0,self.kernel_size-1,self.kernel_size-1)),
-        #     nn.Conv2d(embedding_size, 50, (self.kernel_size, 1)),
-        #     nn.ReLU(),
-        #     nn.AvgPool2d((self.kernel_size,1), stride=1))
-        # self.layer2 = nn.Sequential(
-        #     nn.ReflectionPad2d((0,0,self.kernel_size-1,self.kernel_size-1)),
-        #     nn.Conv2d(50, 50, (self.kernel_size, 1)),
-        #     nn.ReLU(),
-        #     nn.AvgPool2d((max_sequence_length+2,1), stride=1))
+        #ABCNN 논문에서 BCNN 의 네트웍 구조를 빌림.
+        self.layer1 = nn.Sequential(
+            nn.ReflectionPad2d((0,0,self.kernel_size-1,self.kernel_size-1)),
+            nn.Conv2d(embedding_size, kernel_num, (self.kernel_size, 1)),
+            nn.ReLU(),
+            nn.AvgPool2d((self.kernel_size,1), stride=1))
+        self.layer2 = nn.Sequential(
+            nn.ReflectionPad2d((0,0,self.kernel_size-1,self.kernel_size-1)),
+            nn.Conv2d(kernel_num, kernel_num, (self.kernel_size, 1)),
+            nn.ReLU(),
+            nn.AvgPool2d((max_sequence_length+2,1), stride=1))
         
-        # self.LogisticRegression = nn.Linear(50*2, num_classes)
+        self.LogisticRegression = nn.Linear(kernel_num*2, num_classes)
 
         self.embed = nn.Embedding(vocab_size, embedding_size)
         self.sentence_pad = nn.ReflectionPad2d((0,0,0,1))
@@ -146,12 +136,13 @@ class Siamese_CNN(nn.Module):
     def siamese(self, x):
         x = self.embed(x) # (N,W,D)
         x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
-        #x = x.permute(0,3,2,1) # (N,D,W,Ci) # 이렇게 바꿔두자.
+        x = x.permute(0,3,2,1) # (N,D,W,Ci) # 이렇게 바꿔두자.
         if x.size(2)>self.max_sequence_length:
             x=x[:,:,:self.max_sequence_length,:]
         while (x.size(2)<self.max_sequence_length):
              x = self.sentence_pad(x)
-        
+    
+        #print(x.size())
         out = self.layer1(x)
         #print(out.size())
         out = self.layer2(out)
