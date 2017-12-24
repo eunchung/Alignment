@@ -15,30 +15,34 @@ echo model_name: $model_name
 # read test_data
 # echo test_data: $test_data
 
-echo -n "tyep [directory name]: "
+#train_data=train_textbook.txt
+#valid_data=valid_textbook.txt
+#test_data=test_textbook.txt
+
+#train_data=train_twit.txt
+#valid_data=valid_twitter.txt
+#test_data=test_twitter.txt
+
+#train_data=train_all.txt
+#valid_data=valid_all.txt
+#test_data=test_all.txt
+
+echo -n "type [directory name]: "
 read directory_name
 echo directory_name: $directory_name
 
-train_data=train_acc_tw.txt
-#valid_data=valid_acc_tw.txt
-#test_data=test_acc_tw.txt
-valid_data=test_acc_tw.txt
-test_data=valid_acc_tw.txt
 
 #embedding_size=300
 #hidden_size=256
-dropout=0
-for hidden_size in {200..500..100}
+#dropout=0
+for hidden_size in 128 256 512 1024
 do
 	echo hidden_size: $hidden_size
-	for embedding_size in {100..500..100}
-	do
-		#for dropout in 0 0.2 0.5
+	for dropout in 0 0.1 0.2 0.5
+	echo dropout: $dropout
 		for try in {1..5..1}
 		do
-			echo embedding_size: $embedding_size
-			echo dropout: $dropout
-			python main.py $train_data $valid_data $test_data $directory_name $model_name $embedding_size $hidden_size $dropout
+			python main.py $train_data $valid_data $test_data $directory_name $model_name $hidden_size $dropout
 		done
 	done
 done

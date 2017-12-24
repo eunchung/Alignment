@@ -41,13 +41,13 @@ with open(output_train, 'w', encoding ='utf-8') as w_train,\
 
 	corpus = data.readlines()
 	clean_tokenized_corpus = []
-	for line in corpus:
+	for i, line in enumerate(corpus):
 		#print(unicodeToAscii(train_sent))
 		sent1, sent2, label = line.strip().split('\t')
 		sent1 = clean_tweet(sent1)
 		sent2 = clean_tweet(sent2)
 		if (len(sent1) == 0 or len(sent2) == 0):
-			print('there is no sentence')
+			print('%d-th sentence is empty after cleaning' % (i+1))
 			continue
 		word_list_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sent1)))
 		word_list_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sent2)))

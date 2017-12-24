@@ -14,7 +14,7 @@ class BiLSTM(nn.Module):
     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(BiLSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
 
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
 
@@ -25,7 +25,7 @@ class BiLSTM(nn.Module):
     def forward(self, sentence, train = True):
         embeds = self.word_embedding(sentence)
         if train:
-            embeds = self.vertical_dropout(embeds)
+            embeds = self.dropout(embeds)
 
         # Set initial states
         h0 = Variable(torch.zeros(self.num_layers*2, embeds.size(0), self.hidden_size)).cuda() # 2 for bidirection 
@@ -36,7 +36,7 @@ class BiLSTM(nn.Module):
 
         # Decode hidden state of last time step
         if train:
-            out = self.fc(self.vertical_dropout(out[:, -1, :]))
+            out = self.fc(self.dropout(out[:, -1, :]))
         else:
             out = self.fc(out[:, -1, :])
 
@@ -170,7 +170,7 @@ class Siamese_BiLSTM(nn.Module):
     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(Siamese_BiLSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
 
         self.num_layers = num_layers
@@ -182,7 +182,7 @@ class Siamese_BiLSTM(nn.Module):
     def siamese(self, sentence, train = True):
         embeds = self.word_embedding(sentence)
         if train:
-            embeds = self.vertical_dropout(embeds)
+            embeds = self.dropout(embeds)
 
         # Set initial states
         h0 = Variable(torch.zeros(self.num_layers*2, embeds.size(0), self.hidden_size)).cuda() # 2 for bidirection 
@@ -193,7 +193,7 @@ class Siamese_BiLSTM(nn.Module):
 
         # Decode hidden state of last time step
         if train:
-            out = self.vertical_dropout(out[:, -1, :])
+            out = self.dropout(out[:, -1, :])
         else:
             out = out[:, -1, :]
 
@@ -210,25 +210,15 @@ class Siamese_BiLSTM(nn.Module):
 
 
 class EncoderRNN(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
-        self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
 
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers, batch_first=True, bidirectional=True) 
-    
-    def forward(self, sentence, init_hidden, train = True):
-        embeds = self.word_embedding(sentence)
-        
-        if train:
-            embeds = self.vertical_dropout(embeds)
-
-        # Forward propagate RNN
-        output, hidden = self.lstm(embeds, init_hidden)
-
-        return output, hidden
+        self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers, batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(self.hidden_size*2, num_classes)  # *2 for bidirection, BiLSTM 을 오토인코더로 초기화할 때 필요.
 
     def initHidden(self, batch_size):
         # Set initial states
@@ -236,12 +226,30 @@ class EncoderRNN(nn.Module):
         c0 = Variable(torch.zeros(self.num_layers*2, batch_size, self.hidden_size)).cuda()
         return (h0, c0)
 
+    
+    def forward(self, sentence, train = True):
+        #print(sentence)
+        embeds = self.word_embedding(sentence)
+        if train:
+            embeds = self.dropout(embeds)
+
+        # Set initial states
+        h0 = Variable(torch.zeros(self.num_layers*2, embeds.size(0), self.hidden_size)).cuda() # 2 for bidirection 
+        c0 = Variable(torch.zeros(self.num_layers*2, embeds.size(0), self.hidden_size)).cuda()
+
+        # Forward propagate RNN
+        output, hidden = self.lstm(embeds, (h0, c0))
+
+        return output, hidden
+
+
+
 
 class DecoderRNN(nn.Module):
     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
         super(DecoderRNN, self).__init__()
         self.hidden_size = hidden_size
-        self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
 
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
         self.to_decoder_init_hidden = nn.Linear(2*num_layers, num_layers)
@@ -249,24 +257,6 @@ class DecoderRNN(nn.Module):
         self.num_layers = num_layers
         self.lstm = nn.LSTM(embedding_size, self.hidden_size, num_layers, batch_first=True) 
         self.fc = nn.Linear(self.hidden_size, num_classes)  # 2 for bidirection 
-    
-    def forward(self, sentence, hidden, train = True):
-        embeds = self.word_embedding(sentence)
-        
-        if train:
-            embeds = self.vertical_dropout(embeds)
-
-        # Forward propagate RNN
-        #embeds = F.relu(embeds)
-        output, hidden = self.lstm(embeds, hidden)
-
-        # Decode hidden state of last time step
-        if train:
-            output = self.fc(self.vertical_dropout(output[:, -1, :]))
-        else:
-            output = self.fc(output[:, -1, :])
-
-        return output, hidden
 
 
     def initHidden(self, batch_size, init_hidden):
@@ -275,98 +265,117 @@ class DecoderRNN(nn.Module):
         decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).cuda()
         return (decoder_init_hidden, decoder_init_c)
 
+    
+    def forward(self, sentence, hidden, train = True):
+        embeds = self.word_embedding(sentence)
+        if train:
+            embeds = self.dropout(embeds)
+
+        # Forward propagate RNN
+        #embeds = F.relu(embeds)
+        output, hidden = self.lstm(embeds, hidden)
+        
+        # Decode hidden state of last time step
+        if train:
+            output = self.fc(self.dropout(output[:, -1, :]))
+        else:
+            output = self.fc(output[:, -1, :])
+
+        return output, hidden
 
 
+
+
+# # from Effective Approaches to Attention-based Neural Machine Translation https://arxiv.org/pdf/1508.04025.pdf.
+# class AttnDecoderRNN(nn.Module):
+#     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
+#         super(AttnDecoderRNN, self).__init__()
+#         self.num_layers = num_layers
+#         self.hidden_size = hidden_size
+#         self.dropout = nn.Dropout(p=dropout_rate)
+        
+#         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
+#         self.W_C = nn.Linear(embedding_size + 2*self.hidden_size, 2*self.hidden_size)
+#         self.lstm = nn.LSTM(2*self.hidden_size, 2*self.hidden_size, num_layers, batch_first=True) 
+#         self.fc = nn.Linear(2*self.hidden_size, num_classes)
+
+
+#     def initHidden(self, batch_size, init_hidden):
+#         # Set initial states
+#         tmp = torch.unbind(init_hidden[0], dim=0)
+#         decoder_init_hidden = torch.cat(tmp, dim=1).unsqueeze(0)
+#         decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, 2*self.hidden_size)).cuda()
+#         return (decoder_init_hidden, decoder_init_c)
+
+
+#     def forward(self, input, hidden, encoder_outputs, train = True):
+#         embeds = self.word_embedding(input)
+#         if train:
+#             embeds = self.dropout(embeds)
+        
+#         W_enc= encoder_outputs # for simple dot product attention
+#         score = torch.bmm(hidden[0].transpose(0,1), W_enc.transpose(1,2)) # eq(7), dot product
+#         attn_weights = F.softmax(score.view(-1, W_enc.size(1))).view(embeds.size(0), -1, W_enc.size(1))
+#         context = torch.bmm(attn_weights, encoder_outputs)
+        
+#         output = torch.cat((embeds, context), 2)
+#         output = F.tanh(self.W_C(output)) # eq(5)
+        
+#         output, hidden = self.lstm(output, hidden)
+        
+#         # Decode hidden state of last time step
+#         if train:
+#             output = self.fc(self.dropout(output[:, -1, :])) # eq (6)
+#         else:
+#             output = self.fc(output[:, -1, :])
+#         return output, hidden, attn_weights
+
+
+# from pytorch tutorial http://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html
 class AttnDecoderRNN(nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate, max_sequence_length=50):
         super(AttnDecoderRNN, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
-        self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        self.dropout = nn.Dropout(p=dropout_rate)
+        self.max_sequence_length = max_sequence_length
         
+        self.W_A = nn.Linear(embedding_size + 2*self.hidden_size, self.max_sequence_length)
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-        #self.to_decoder_init_hidden = nn.Linear(2*num_layers, num_layers) 
-        
-        self.lstm = nn.LSTM(embedding_size+ 2*self.hidden_size, 2*self.hidden_size, num_layers, batch_first=True) 
-        self.fc = nn.Linear(2*self.hidden_size+2*self.hidden_size, num_classes)
-
-    def forward(self, input, hidden, encoder_outputs, train = True):
-        embeds = self.word_embedding(input)
-        if train:
-            embeds = self.vertical_dropout(embeds)
-        
-        #W_enc= self.general_attn_W(encoder_outputs)
-        W_enc= encoder_outputs # for simple dot product attention
-
-        attn_weights = F.softmax(torch.bmm(hidden[0].transpose(0,1), W_enc.transpose(1,2)).view(-1, W_enc.size(1))).view(embeds.size(0), -1, W_enc.size(1))
-        context = torch.bmm(attn_weights, encoder_outputs)
-        
-        output = torch.cat((embeds, context), 2)
-        
-        #output = F.relu(output)
-        output, hidden = self.lstm(output, hidden)
-        
-        output = torch.cat((output, context), 2)
-        # Decode hidden state of last time step
-        if train:
-            output = self.fc(self.vertical_dropout(output[:, -1, :]))
-        else:
-            output = self.fc(output[:, -1, :])
-        return output, hidden, attn_weights
+        self.W_C = nn.Linear(embedding_size + 2*self.hidden_size, 2*self.hidden_size)
+        self.lstm = nn.LSTM(2*self.hidden_size, 2*self.hidden_size, num_layers, batch_first=True) 
+        self.fc = nn.Linear(2*self.hidden_size, num_classes)
 
 
     def initHidden(self, batch_size, init_hidden):
         # Set initial states
-        #decoder_init_hidden = self.to_decoder_init_hidden(init_hidden[0].transpose(2, 0)).transpose(2, 0).contiguous()
         tmp = torch.unbind(init_hidden[0], dim=0)
         decoder_init_hidden = torch.cat(tmp, dim=1).unsqueeze(0)
         decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, 2*self.hidden_size)).cuda()
         return (decoder_init_hidden, decoder_init_c)
 
 
+    def forward(self, input, hidden, encoder_outputs, train = True):
+        embeds = self.word_embedding(input)
+        if train:
+            embeds = self.dropout(embeds)
 
-# general attention
-# class AttnDecoderRNN(nn.Module):
-#     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate):
-#         super(AttnDecoderRNN, self).__init__()
-#         self.num_layers = num_layers
-#         self.hidden_size = hidden_size
-#         self.vertical_dropout = nn.Dropout(p=dropout_rate)
+        encoder_outputs_max = Variable(torch.zeros( embeds.size(0), self.max_sequence_length, 2*self.hidden_size)).cuda()
+        encoder_outputs_max[:, :encoder_outputs.size(1), :] = encoder_outputs
         
-#         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-#         self.to_decoder_init_hidden = nn.Linear(2*num_layers, num_layers)
+        score = self.W_A(torch.cat((embeds, hidden[0].transpose(0,1)), 2))
+        attn_weights = F.softmax(score, dim=2)
+        context = torch.bmm(attn_weights, encoder_outputs_max)
         
-#         self.general_attn_W = nn.Linear(2*hidden_size, hidden_size)
+        output = torch.cat((embeds, context), 2)
+        output = F.relu(self.W_C(output)) # eq(5)
         
-#         self.lstm = nn.LSTM(embedding_size+ 2*hidden_size, hidden_size, num_layers, batch_first=True) 
-#         self.fc = nn.Linear(hidden_size+2*hidden_size, num_classes)
+        output, hidden = self.lstm(output, hidden)
+        
+        # Decode hidden state of last time step
+        if train:
+            output = self.fc(self.dropout(output[:, -1, :])) # eq (6)
+        else:
+            output = self.fc(output[:, -1, :])
 
-#     def forward(self, input, hidden, encoder_outputs, train = True):
-#         embeds = self.word_embedding(input)
-#         if train:
-#             embeds = self.vertical_dropout(embeds)
-        
-#         W_enc= self.general_attn_W(encoder_outputs)
-        
-#         attn_weights = F.softmax(torch.bmm(hidden[0].transpose(0,1), W_enc.transpose(1,2)).view(-1, W_enc.size(1))).view(embeds.size(0), -1, W_enc.size(1))
-#         context = torch.bmm(attn_weights, encoder_outputs)
-        
-#         output = torch.cat((embeds, context), 2)
-        
-#         #output = F.relu(output)
-#         output, hidden = self.lstm(output, hidden)
-        
-#         output = torch.cat((output, context), 2)
-#         # Decode hidden state of last time step
-#         if train:
-#             output = self.fc(self.vertical_dropout(output[:, -1, :]))
-#         else:
-#             output = self.fc(output[:, -1, :])
-#         return output, hidden, attn_weights
-
-
-#     def initHidden(self, batch_size, init_hidden):
-#         # Set initial states
-#         decoder_init_hidden = self.to_decoder_init_hidden(init_hidden[0].transpose(2, 0)).transpose(2, 0).contiguous()
-#         decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).cuda()
-#         return (decoder_init_hidden, decoder_init_c)
+        return output, hidden, attn_weights

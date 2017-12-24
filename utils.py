@@ -229,6 +229,34 @@ class GenerateDataset(Dataset):
 
 
 
+class GenerateDataset_AE(Dataset):
+    """ Alignment dataset."""
+    # Initialize your data, download, etc.
+    def __init__(self, data_path, word_to_ix, batch_size):
+        data_file = open(data_path, 'r', encoding ='utf-8')
+        self.data = data_file.readlines()
+        self.len = math.floor(len(self.data)/batch_size)
+        self.word_to_ix = word_to_ix
+        self.batch_size = batch_size
+        
+    def __getitem__(self, index):
+        vectorized_seqs, seq_lengths = [], []
+        
+        for i in range(self.batch_size):
+            self.line = self.data[index*self.batch_size + i]
+            sentence_1, sentence_2, label = self.line.lower().strip().split('\t')
+
+            self.sentence = (sentence_1+' '+sentence_2).split()
+            self.sentence_tensor = prepare_sequence(self.sentence, self.word_to_ix)
+            seq_lengths.append(len(self.sentence))
+            vectorized_seqs.append(self.sentence_tensor)
+
+        return pad_sequences(vectorized_seqs, seq_lengths), pad_sequences(vectorized_seqs, seq_lengths)
+
+    def __len__(self):
+        return self.len
+
+
 class ContrastiveLoss(torch.nn.Module):
     """
     Borrowed from: https://github.com/harveyslash/Facial-Similarity-with-Siamese-Networks-in-Pytorch/blob/master/Siamese-networks-medium.ipynb

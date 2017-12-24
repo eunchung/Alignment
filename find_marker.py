@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 import sys
 import numpy
@@ -15,14 +14,14 @@ from models import *
 # Hyper Parameters
 max_sequence_length = 30
 max_vocabulary_size = 25000
-embedding_size = int(sys.argv[5]) #300
-hidden_size = int(sys.argv[6]) # 256
-num_layers = 1
+embedding_size = 300
+hidden_size = int(sys.argv[5]) # 256
+num_layers = 2
 num_classes = 2
 batch_size = 1
 num_epochs = 30
 learning_rate = 0.001
-dropout_rate = float(sys.argv[7]) #0
+dropout_rate = float(sys.argv[6]) #0
 
 train_data_path = 'train_500samples.txt' 
 unlabeled_data_path = sys.argv[1]  # preprocessed_10000unlabeled.txt
@@ -43,7 +42,7 @@ def model(x):
 
 model = model(model_name)
 model.cuda()
-model.load_state_dict(torch.load('./models/'+directory_name+'/%s_emb%d_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, embedding_size, hidden_size, dropout_rate, accuracy)))
+model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, hidden_size, dropout_rate, accuracy)))
 print(model)
 
 # Predict whether tweet-reply pair is alignment or not
@@ -55,8 +54,8 @@ if not os.path.exists('./result/'+directory_name):
     os.makedirs('./result/'+directory_name)
 
 with open(unlabeled_data_path,'r', encoding = 'utf-8') as tweet, \
-     open('./result/'+directory_name+'/Align_%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, embedding_size, hidden_size, dropout_rate, accuracy), 'w', encoding ='utf-8') as Align, \
-     open('./result/'+directory_name+'/None_%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, embedding_size, hidden_size, dropout_rate, accuracy), 'w', encoding ='utf-8') as none:
+     open('./result/'+directory_name+'/Align_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'w', encoding ='utf-8') as Align, \
+     open('./result/'+directory_name+'/None_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'w', encoding ='utf-8') as none:
 
     count = 0
     for sentences in tweet.readlines():
@@ -95,28 +94,28 @@ with open(unlabeled_data_path,'r', encoding = 'utf-8') as tweet, \
 from collections import Counter
 counts = Counter()
 align_count = 0
-none_count = 0
-with open('./result/'+directory_name+'/Align_%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, embedding_size, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as f:
-    for line in f.readlines():
+with open('./result/'+directory_name+'/Align_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as r_align, \
+    open('./result/'+directory_name+'/%s_%s_Align_marker_%0.2f.txt'%(model_name, align_count, accuracy), 'w', encoding = 'utf-8') as w_align:
+    for line in r_align.readlines():
         counts.update(line.rstrip().split())
         align_count += 1
 
-weights = {word: count/align_count for word, count in counts.items()} # align 문장수 2745 편의상 직접 셈.
-print('align_count', align_count)
-with open('./result/'+directory_name+'/%s_%s_Align_marker_%0.2f.txt'%(model_name, align_count, accuracy), 'w', encoding = 'utf-8') as f:
+    weights = {word: count/align_count for word, count in counts.items()}
+    print('align_count', align_count)
     for key, count in sorted(weights.items(), key=lambda x: x[1], reverse=True):
-        f.write(key+'\t'+str(count)+'\n')
+        w_align.write(key+'\t'+str(count)+'\n')
 
 
 counts_none = Counter()
-with open('./result/'+directory_name+'/None_%s_emb%d_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, embedding_size, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as f:
-    for line in f.readlines():
+none_count = 0
+with open('./result/'+directory_name+'/None_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as r_none, \
+    open('./result/'+directory_name+'/%s_%s_None_marker_%0.2f.txt'%(model_name, none_count, accuracy), 'w', encoding = 'utf-8') as w_none:
+    for line in r_none.readlines():
         counts_none.update(line.rstrip().split())
         none_count +=1
 
-weights_none = {word: count/none_count for word, count in counts_none.items()}
-print('none_count', none_count)
+    weights_none = {word: count/none_count for word, count in counts_none.items()}
+    print('none_count', none_count)
 
-with open('./result/'+directory_name+'/%s_%s_None_marker_%0.2f.txt'%(model_name, none_count, accuracy), 'w', encoding = 'utf-8') as f:
     for key, count in sorted(weights_none.items(), key=lambda x: x[1], reverse=True):
-        f.write(key+'\t'+str(count)+'\n')
+        w_none.write(key+'\t'+str(count)+'\n')

@@ -34,7 +34,7 @@ with open(output, 'a', encoding ='utf-8') as w_augmented,\
 	# 	sent1, sent2, label = train_sent.strip().split('\t')
 	# 	w_augmented.write(sent1.strip()+' EndOfSentence\t'+sent2.strip()+' EndOfSentence\t'+ label.strip() +'\n')
 
-	# 본래 train_data 에다가 number_of_augmented 만큼 augmented 한 데이터를 추가함.
+	# number_of_augmented 만큼 augmented 한 데이터를 추가함.
 	for _ in range(number_of_augmented):
 		for train_sent in train_corpus:
 			#print(unicodeToAscii(train_sent))
