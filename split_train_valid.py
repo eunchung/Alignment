@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 output_train = 'train_' + sys.argv[1]
 output_valid = 'valid_' + sys.argv[1]
 #output_test = 'test_twitter.txt'
-output_test = 'test_text.txt'
-#output_test = 'test_all.txt'
+#output_test = 'test_text.txt'
+#output_test = 'test_all.txt' # 이건 위의 두 데이터를 합쳐서 만듬.
 
 
 import re

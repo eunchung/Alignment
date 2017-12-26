@@ -137,7 +137,7 @@ class Siamese_CNN(nn.Module):
         self.embed = nn.Embedding(vocab_size, embedding_size)
         self.sentence_pad = nn.ReflectionPad2d((0,0,0,1))
 
-        
+
     def siamese(self, x):
         x = self.embed(x) # (N,W,D)
         x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 

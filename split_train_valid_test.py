@@ -49,8 +49,8 @@ with open(output_train, 'w', encoding ='utf-8') as w_train,\
 		if (len(sent1) == 0 or len(sent2) == 0):
 			print('%d-th sentence is empty after cleaning' % (i+1))
 			continue
-		word_list_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sent1)))
-		word_list_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sent2)))
+		word_list_1 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent1)))
+		word_list_2 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent2)))
 		sent1=' '.join(word_list_1)
 		sent2=' '.join(word_list_2)
 		clean_tokenized_corpus.append(sent1.strip()+'\t'+sent2.strip()+'\t'+ label.strip() +'\n')
