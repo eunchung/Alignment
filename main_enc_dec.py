@@ -124,6 +124,7 @@ def train(input_variable, target_variable, batch_size, encoder, decoder, encoder
 
 def evaluate(encoder, decoder, input_variable):
     encoder_outputs, encoder_hidden = encoder(input_variable, train=False)
+    #max_sequence_length = encoder_outputs.size(1) # for simple dot product
     
     SOS_token = 0
     decoder_input = Variable(torch.LongTensor([[SOS_token]]))

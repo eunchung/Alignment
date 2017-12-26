@@ -19,7 +19,7 @@ embedding_size = 300 #int(sys.argv[6]) #300
 hidden_size = int(sys.argv[6])#256
 num_layers = 2
 num_classes = 2
-batch_size = 50
+batch_size = 150
 num_epochs = 30
 learning_rate = 0.001 #float(sys.argv[6]) #0.003
 dropout_rate = float(sys.argv[7]) #0
@@ -261,9 +261,9 @@ elif model_name in ['Siamese_BiLSTM','Siamese_CNN']:
             missed_pairs.append('label: ' + str(label.numpy()[0][0]) +'\t' + 'predicted: '+str(predicted.cpu().numpy()) + '\t' + ' '.join(sentence_1)+'\t'+' '.join(sentence_2)+'\n')
         correct += (predicted.cpu() == label).sum()
 
-print('Test Accuracy of the best valid loss model: %0.2f %%' % (100 * correct / total))
+print('Test Accuracy of the best valid accuracy model: %0.2f %%' % (100 * correct / total))
 # write result
-with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.txt' % (model_name, hidden_size, dropout_rate, 100 * correct / total), 'a', encoding ='utf-8') as w:
+with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accuracy.txt' % (model_name, hidden_size, dropout_rate, 100 * correct / total), 'a', encoding ='utf-8') as w:
 
     w.write('[setting]: '+'\tbatch_size\t'+str(batch_size)+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
     w.write('[Test Accuracy of the model]: %0.2f %% \n' % (100 * correct / total)) 

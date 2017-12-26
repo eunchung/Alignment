@@ -4,7 +4,10 @@ from sklearn.model_selection import train_test_split
 
 output_train = 'train_' + sys.argv[1]
 output_valid = 'valid_' + sys.argv[1]
-output_test = 'test_' + sys.argv[1]
+#output_test = 'test_twitter.txt'
+output_test = 'test_text.txt'
+#output_test = 'test_all.txt'
+
 
 import re
 import nltk
@@ -37,37 +40,35 @@ def clean_tweet(tweet):
 with open(output_train, 'w', encoding ='utf-8') as w_train,\
 	open(output_valid, 'w', encoding ='utf-8') as w_valid,\
 	open(output_test, 'w', encoding ='utf-8') as w_test,\
-	open('./'+sys.argv[1], 'r', encoding='utf-8') as data:
+	open('./'+sys.argv[1], 'r', encoding='utf-8') as data, \
+	open('./'+sys.argv[2], 'r', encoding='utf-8') as test_data:
 
 	corpus = data.readlines()
 	clean_tokenized_corpus = []
 	for i, line in enumerate(corpus):
-		#print(unicodeToAscii(train_sent))
-		sent1, sent2, label = line.lower().strip().split('\t')
+		#print(unicodeToAscii(line))
+		sent1, sent2, label = line.strip().split('\t')
 		sent1 = clean_tweet(sent1)
 		sent2 = clean_tweet(sent2)
 		if (len(sent1) == 0 or len(sent2) == 0):
-			print('%d-th sentence is empty after cleaning' % (i+1))
+			print('[train_data] %d-th sentence is empty after cleaning' % (i+1))
 			continue
-		word_list_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sent1)))
-		word_list_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sent2)))
+		word_list_1 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent1)))
+		word_list_2 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent2)))
 		sent1=' '.join(word_list_1)
 		sent2=' '.join(word_list_2)
 		clean_tokenized_corpus.append(sent1.strip()+'\t'+sent2.strip()+'\t'+ label.strip() +'\n')
 
 
-	train, test = train_test_split(clean_tokenized_corpus, test_size=0.2, random_state=6)
-	valid =test[ : math.floor(len(test)/2)]
-	test = test[math.floor(len(test)/2) : ]
-
+	train, valid = train_test_split(clean_tokenized_corpus, test_size=0.1, random_state=6)
+	
 	print('length of train_data', len(train))
 	print('length of valid_data', len(valid))
-	print('length of test_data', len(test))
-
+	
 	for train_sent in train:
 		sent1, sent2, label = train_sent.strip().split('\t')
-		#w_train.write(sent1.strip()+' endofsentence\t'+sent2.strip()+' endofsentence\t'+ label.strip() +'\n')
-		w_train.write(sent1.strip()+'\t'+sent2.strip()+'\t'+ label.strip() +'\n') # 나중에 augmented 할때 endofsentence 추가하는 방식을 사용. 이때 추가해두면 worddropout 시에 unk 되버림.
+		w_train.write(sent1.strip()+' endofsentence\t'+sent2.strip()+' endofsentence\t'+ label.strip() +'\n')
+		#w_train.write(sent1.strip()+'\t'+sent2.strip()+'\t'+ label.strip() +'\n') # 나중에 augmented 할때 endofsentence 추가하는 방식을 사용. 이때 추가해두면 worddropout 시에 unk 되버림.
 
 
 	for valid_sent in valid:
@@ -75,7 +76,17 @@ with open(output_train, 'w', encoding ='utf-8') as w_train,\
 		w_valid.write(sent1.strip()+' endofsentence\t'+sent2.strip()+' endofsentence\t'+ label.strip() +'\n')
 		
 
-	for test_sent in test:
-		sent1, sent2, label = test_sent.strip().split('\t')
+	test_corpus = test_data.readlines()
+	for i, line in enumerate(test_corpus):
+		sent1, sent2, label = line.strip().split('\t')
+		sent1 = clean_tweet(sent1)
+		sent2 = clean_tweet(sent2)
+		if (len(sent1) == 0 or len(sent2) == 0):
+			print('[test_data] %d-th sentence is empty after cleaning' % (i+1))
+			continue
+		word_list_1 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent1)))
+		word_list_2 = toktok.tokenize(' '.join(nltk.wordpunct_tokenize(sent2)))
+		sent1=' '.join(word_list_1)
+		sent2=' '.join(word_list_2)
 		w_test.write(sent1.strip()+' endofsentence\t'+sent2.strip()+' endofsentence\t'+ label.strip() +'\n')
 

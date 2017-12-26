@@ -19,9 +19,9 @@ echo model_name: $model_name
 #valid_data=valid_textbook.txt
 #test_data=test_textbook.txt
 
-#train_data=train_twit.txt
-#valid_data=valid_twitter.txt
-#test_data=test_twitter.txt
+train_data=train_WD_0.20_aug_train_twitter.txt
+valid_data=valid_WD_0.20_aug_train_twitter.txt
+test_data=test_twitter.txt
 
 #train_data=train_all.txt
 #valid_data=valid_all.txt
@@ -31,17 +31,17 @@ echo -n "type [directory name]: "
 read directory_name
 echo directory_name: $directory_name
 
-
 #embedding_size=300
 #hidden_size=256
 #dropout=0
 for hidden_size in 128 256 512 1024
 do
-	echo hidden_size: $hidden_size
 	for dropout in 0 0.1 0.2 0.5
-	echo dropout: $dropout
+	do
 		for try in {1..5..1}
 		do
+			echo hidden_size: $hidden_size
+			echo dropout: $dropout
 			python main.py $train_data $valid_data $test_data $directory_name $model_name $hidden_size $dropout
 		done
 	done
