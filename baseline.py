@@ -1,20 +1,7 @@
-import torch 
-import torch.nn as nn
-import torch.nn.functional as F
-
-from torch.utils.data import Dataset, DataLoader
-from torch.autograd import Variable
-from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
-
 import sys
-import numpy
 import unicodedata
 import string
 import os
-
-import nltk
-from nltk.tokenize.toktok import ToktokTokenizer
-toktok = ToktokTokenizer()
 
 test_data_path = sys.argv[1] 
 directory_name = sys.argv[2] 
@@ -39,12 +26,13 @@ def marker_set(x):
         '2': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no'],
         '3': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay'],
         '4': ['el', 'la', 'los', 'las', 'lo', 'sí', 'bien', 'si', 'mucho', 'no', 'con', 'a', 'en','por', 'hay', 'siempre', 'nunca', 'y','pero','así'],
-        'd1': ['que', 'de', 'y', 'a', 'la'],
-        'd2': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo'],
-        'd3': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por'],
-        'd4': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por', 'con', 'sí', 'me', 'si', 'para'],
-        'd5': ['que', 'de', 'y', 'a', 'la', 'no', 'el', 'es', 'los', 'lo', 'en', 'un', 'se', 'te', 'por', 'con', 'sí', 'me', 'si', 'para', 'yo', 'más', 'como', 'preo', 'una', \
-                'tu', 'mi', 'las', 'del', 'ya', 'al', 'gracias', 'su', 'muy', 'son', 'o', 'eso', 'todo', 'le', 'hay', 'día', 'este', 'ser', 'mas', 'nos', 'esto', 'todos', 'tiene', 'bien', 'así'],
+        'd1': ['de', 'que', 'a', 'la', 'y'],
+        'd2': ['de', 'que', 'a', 'la', 'y', 'no', 'el', 'en', 'es', 'los'],
+        'd3': ['de', 'que', 'a', 'la', 'y', 'no', 'el', 'en', 'es', 'los', 'por', 'lo', 'un', 'se', 'con'],
+        'd4': ['de', 'que', 'a', 'la', 'y', 'no', 'el', 'en', 'es', 'los', 'por', 'lo', 'un', 'se', 'con', 'me', 'si', 'te', 'para', 'del'],
+        'd5': ['de', 'que', 'a', 'la', 'y', 'no', 'el', 'en', 'es', 'los', 'por', 'lo', 'un', 'se', 'con', 'me', 'si', 'te', 'para', 'del', \
+                'una','las','mi','pero','al','más','le','como','ya','yo','q','todo','gracias','su','todos','son','esto','este','qué','hay',\
+                'nos','tu','o','esta','hoy','muy','ha','eso','ni','porque'],
     }.get(x)
 
 alignment_markers = marker_set(alignment_marker_type)
@@ -63,7 +51,7 @@ with open('./result/'+directory_name+'/baseline_makrer_%s.txt'%alignment_marker_
 
     for line in test_data.readlines():
         sentence_1, sentence_2, label = line.lower().strip().split('\t')
-        word_list = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_2))) # 후속 문장의 단어만 보고 판단.
+        word_list = sentence_2.split() # 후속 문장의 단어만 보고 판단.
 
         predicted = 2 # 기본은 none (2) 이고, marker 가 포함되었을때만 alignment (1) 로 함.
         for candidate in alignment_markers:
@@ -79,3 +67,5 @@ with open('./result/'+directory_name+'/baseline_makrer_%s.txt'%alignment_marker_
 
     print('Test Accuracy of baseline: %0.2f %%' % (100 * correct / total)) 
     w.write('[Test Accuracy of baseline] : %0.2f %% \n\n' % (100 * correct / total)) 
+
+os.rename('./result/'+directory_name+'/baseline_makrer_%s.txt'%alignment_marker_type, './result/'+directory_name+'/baseline_makrer_%s_Acc%0.2f.txt'%(alignment_marker_type, (100 * correct / total)))

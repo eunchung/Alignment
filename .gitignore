@@ -2,5 +2,6 @@
 /models/
 /vocab/
 /result/
+/prototype/
 *.pkl
 *.txt

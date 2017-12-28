@@ -212,10 +212,10 @@ for epoch in range(num_epochs):
                 
             if valid_loss < keep_valid_loss:
                 keep_valid_loss = valid_loss
-                torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_accuracy.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
-                torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_accuracy.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+                torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+                torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
                 
-                print('%s (%d %d%%) loss %.4f, valid loss: %.4f <saved model>' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
+                print('%s (%d %d%%) loss %.4f, valid loss: %.4f <best valid>' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
                                          (i+1)+epoch*len(train_dataset), ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) * 100, print_loss_avg, valid_loss))
                 
             else:
@@ -260,10 +260,10 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_generation.txt'%
 
 # load the best valid model.
 best_valid_epoch = 5
-encoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_accuracy.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
-decoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_accuracy.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
+encoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
+decoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
 
-with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_with_best_valid_accuracy.txt'%(decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio), 'a', encoding ='utf-8') as w:
+with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_with_best_valid_loss.txt'%(decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio), 'a', encoding ='utf-8') as w:
 
     attention_result = []
     for sentence_1, sentence_2 in test_loader:
@@ -283,6 +283,6 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_with_best_valid_
         w.write('Genera_sentence: \t' + ' '.join(predicted)+'\n')
     
     w.write('[setting]: '+'\tbatch_size\t'+str(batch_size)+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
-    w.write('saved to ./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_best_valid_accuracy.pkl\n' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio))
-    w.write('saved to ./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_best_valid_accuracy.pkl\n' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio))
+    w.write('saved to ./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_best_valid_loss.pkl\n' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio))
+    w.write('saved to ./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_best_valid_loss.pkl\n' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio))
     w.write('-'*100+'\n\n')
