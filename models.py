@@ -331,48 +331,48 @@ class AttnDecoderRNN(nn.Module):
         return output, hidden, attn_weights
 
 
-# # from Effective Approaches to Attention-based Neural Machine Translation https://arxiv.org/pdf/1508.04025.pdf.
-# class AttnDecoderRNN(nn.Module):
-#     def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate, max_sequence_length):
-#         super(AttnDecoderRNN, self).__init__()
-#         self.num_layers = num_layers
-#         self.hidden_size = hidden_size
-#         self.dropout = nn.Dropout(p=dropout_rate)
+# from Effective Approaches to Attention-based Neural Machine Translation https://arxiv.org/pdf/1508.04025.pdf.
+class AttnDecoderRNN_simple_dotproduct(nn.Module):
+    def __init__(self, vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate, max_sequence_length):
+        super(AttnDecoderRNN_simple_dotproduct, self).__init__()
+        self.num_layers = num_layers
+        self.hidden_size = hidden_size
+        self.dropout = nn.Dropout(p=dropout_rate)
         
-#         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-#         self.W_C = nn.Linear(embedding_size + 2*self.hidden_size, 2*self.hidden_size)
-#         self.lstm = nn.LSTM(2*self.hidden_size, 2*self.hidden_size, num_layers, batch_first=True) 
-#         self.fc = nn.Linear(2*self.hidden_size, num_classes)
+        self.word_embedding = nn.Embedding(vocab_size, embedding_size)
+        self.W_C = nn.Linear(embedding_size + 2*self.hidden_size, 2*self.hidden_size)
+        self.lstm = nn.LSTM(2*self.hidden_size, 2*self.hidden_size, num_layers, batch_first=True) 
+        self.fc = nn.Linear(2*self.hidden_size, num_classes)
 
 
-#     def initHidden(self, batch_size, init_hidden):
-#         # Set initial states
-#         tmp = torch.unbind(init_hidden[0], dim=0)
-#         decoder_init_hidden = torch.cat(tmp, dim=1).unsqueeze(0)
-#         decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, 2*self.hidden_size)).cuda()
-#         return (decoder_init_hidden, decoder_init_c)
+    def initHidden(self, batch_size, init_hidden):
+        # Set initial states
+        tmp = torch.unbind(init_hidden[0], dim=0)
+        decoder_init_hidden = torch.cat(tmp, dim=1).unsqueeze(0)
+        decoder_init_c = Variable(torch.zeros(self.num_layers, batch_size, 2*self.hidden_size)).cuda()
+        return (decoder_init_hidden, decoder_init_c)
 
 
-#     def forward(self, input, hidden, encoder_outputs, train = True):
-#         embeds = self.word_embedding(input)
-#         if train:
-#             embeds = self.dropout(embeds)
+    def forward(self, input, hidden, encoder_outputs, train = True):
+        embeds = self.word_embedding(input)
+        if train:
+            embeds = self.dropout(embeds)
         
-#         W_enc= encoder_outputs # for simple dot product attention
-#         score = torch.bmm(hidden[0].transpose(0,1), W_enc.transpose(1,2)) # eq(7), dot product
-#         attn_weights = F.softmax(score, dim=2)
-#         context = torch.bmm(attn_weights, encoder_outputs)
+        W_enc= encoder_outputs # for simple dot product attention
+        score = torch.bmm(hidden[0].transpose(0,1), W_enc.transpose(1,2)) # eq(7), dot product
+        attn_weights = F.softmax(score, dim=2)
+        context = torch.bmm(attn_weights, encoder_outputs)
         
-#         output = torch.cat((embeds, context), 2)
-#         output = F.tanh(self.W_C(output)) # eq(5)
-#         #output = F.relu(self.W_C(output)) # eq(5)
-#         
-#         output, hidden = self.lstm(output, hidden)
+        output = torch.cat((embeds, context), 2)
+        output = F.tanh(self.W_C(output)) # eq(5)
+        #output = F.relu(self.W_C(output)) # eq(5)
         
-#         # Decode hidden state of last time step
-#         if train:
-#             output = self.fc(self.dropout(output[:, -1, :])) # eq (6)
-#         else:
-#             output = self.fc(output[:, -1, :])
-#         return output, hidden, attn_weights
+        output, hidden = self.lstm(output, hidden)
+        
+        # Decode hidden state of last time step
+        if train:
+            output = self.fc(self.dropout(output[:, -1, :])) # eq (6)
+        else:
+            output = self.fc(output[:, -1, :])
+        return output, hidden, attn_weights
 
