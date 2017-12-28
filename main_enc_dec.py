@@ -29,7 +29,7 @@ valid_data_path = sys.argv[2]
 test_data_path = sys.argv[3] # test_twitter.txt
 directory_name = sys.argv[4] #'twit_gen'
 
-encoder_name = 'ENC'
+encoder_name = 'AttENC'
 decoder_name = sys.argv[5] #'DEC'
 
 word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=False)
@@ -187,42 +187,42 @@ if not os.path.exists('./models'):
 if not os.path.exists('./models/'+directory_name):
     os.makedirs('./models/'+directory_name)
 
-for epoch in range(num_epochs):
-    for i, (sentence_1, sentence_2) in enumerate(train_loader):
-        start = time.time()
-        sentence_1 = Variable(sentence_1.view(batch_size, -1)).cuda()
-        sentence_2 = Variable(sentence_2.view(batch_size, -1)).cuda()
-        loss = train(sentence_1, sentence_2, batch_size, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, loss_function)
-        print_loss_total += loss
+# for epoch in range(num_epochs):
+#     for i, (sentence_1, sentence_2) in enumerate(train_loader):
+#         start = time.time()
+#         sentence_1 = Variable(sentence_1.view(batch_size, -1)).cuda()
+#         sentence_2 = Variable(sentence_2.view(batch_size, -1)).cuda()
+#         loss = train(sentence_1, sentence_2, batch_size, encoder,
+#                      decoder, encoder_optimizer, decoder_optimizer, loss_function)
+#         print_loss_total += loss
         
-        if ((i+1)+epoch*len(train_dataset)) % print_every == 0:
-            print_loss_avg = print_loss_total / print_every
-            print_loss_total = 0
+#         if ((i+1)+epoch*len(train_dataset)) % print_every == 0:
+#             print_loss_avg = print_loss_total / print_every
+#             print_loss_total = 0
             
-            # valid set test
-            valid_loss = 0
-            for sentence_1, sentence_2 in valid_loader:
-                sentence_1 = Variable(sentence_1.view(1, -1)).cuda()
-                sentence_2 = Variable(sentence_2.view(1, -1)).cuda()
-                loss = train(sentence_1, sentence_2, 1, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, loss_function, train_data = False)
-                valid_loss += loss
+#             # valid set test
+#             valid_loss = 0
+#             for sentence_1, sentence_2 in valid_loader:
+#                 sentence_1 = Variable(sentence_1.view(1, -1)).cuda()
+#                 sentence_2 = Variable(sentence_2.view(1, -1)).cuda()
+#                 loss = train(sentence_1, sentence_2, 1, encoder,
+#                      decoder, encoder_optimizer, decoder_optimizer, loss_function, train_data = False)
+#                 valid_loss += loss
                 
-            if valid_loss < keep_valid_loss:
-                keep_valid_loss = valid_loss
-                torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
-                torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+#             if valid_loss < keep_valid_loss:
+#                 keep_valid_loss = valid_loss
+#                 torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+#                 torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
                 
-                print('%s (%d %d%%) loss %.4f, valid loss: %.4f <best valid>' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
-                                         (i+1)+epoch*len(train_dataset), ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) * 100, print_loss_avg, valid_loss))
+#                 print('%s (%d %d%%) loss %.4f, valid loss: %.4f <best valid>' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
+#                                          (i+1)+epoch*len(train_dataset), ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) * 100, print_loss_avg, valid_loss))
                 
-            else:
-	            torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
-	            torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
-	            print('%s (%d %d%%) loss %.4f, valid loss: %.4f' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
-                                         (i+1)+epoch*len(train_dataset), ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) * 100, print_loss_avg, valid_loss))
-            losses = 0
+#             else:
+# 	            torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+# 	            torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
+# 	            print('%s (%d %d%%) loss %.4f, valid loss: %.4f' % (timeSince(start, ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) ),
+#                                          (i+1)+epoch*len(train_dataset), ((i+1)+epoch*len(train_dataset)) / (num_epochs*len(train_dataset)) * 100, print_loss_avg, valid_loss))
+#             losses = 0
 
 
 # Test the Model
@@ -230,6 +230,9 @@ if not os.path.exists('./result'):
     os.makedirs('./result')
 if not os.path.exists('./result/'+directory_name):
     os.makedirs('./result/'+directory_name)
+
+encoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_last_epoch.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio)))
+decoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_last_epoch.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio)))
 
 with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_generation.txt'%(decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio), 'a', encoding ='utf-8') as w:
 
