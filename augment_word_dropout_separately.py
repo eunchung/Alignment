@@ -1,13 +1,8 @@
 import sys
 import numpy as np
-from sklearn.model_selection import train_test_split
-
-import re
 
 import unicodedata
 import string
-import math
-import random
 
 # 윈도우에서 스패인어 보기 위해.
 # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427
@@ -38,7 +33,7 @@ with open(output, 'w', encoding ='utf-8') as w_augmented,\
 	for align_sent in align_corpus:
 		w_augmented.write(align_sent)
 		
-	# number_of_augmented_align 만큼 augmented 한 데이터를 추가함.
+	# number_of_augmented_align - 1 만큼 augmented 한 데이터를 추가함.
 	for _ in range(number_of_augmented_align - 1):
 		for align_sent in align_corpus:
 			#print(unicodeToAscii(train_sent))
@@ -71,7 +66,7 @@ with open(output, 'w', encoding ='utf-8') as w_augmented,\
 	for none_sent in none_corpus:
 		w_augmented.write(none_sent)
 
-	# number_of_augmented_none 만큼 augmented 한 데이터를 추가함.
+	# number_of_augmented_none - 1 만큼 augmented 한 데이터를 추가함.
 	for _ in range(number_of_augmented_none - 1):
 		for none_sent in none_corpus:
 			#print(unicodeToAscii(train_sent))

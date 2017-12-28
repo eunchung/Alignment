@@ -56,7 +56,9 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(len(kernel_sizes)*kernel_num, num_classes)
 
     def highway(self, input_, num_layers=1, bias=-2.0):
-        """Highway Network (cf. http://arxiv.org/abs/1505.00387).
+        """
+        Recently, Kim Yoon's text CNN model usually use highway networks.
+        Highway Network (cf. http://arxiv.org/abs/1505.00387).
         borrowed from https://github.com/mkroutikov/tf-lstm-char-cnn
         t = sigmoid(Wy + b)
         z = t * g(Wy + b) + (1 - t) * y
@@ -75,7 +77,7 @@ class CNN(nn.Module):
     def forward(self, x, train = True):
         x = self.embed(x) # (N,W,D)
 
-        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
+        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어 윈도우수-3개보다 작으면 안됨. D가 embedding_size 
         x = self.padding(x)
         x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1] #[(N,Co,W), ...]*len(Ks)
         x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x] #[(N,Co), ...]*len(Ks)
@@ -102,7 +104,7 @@ class Cha_CNN_LSTM(nn.Module):
     def forward(self, x, train = True):
         x = self.embed(x) # (N,W,D)
 
-        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
+        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어 윈도우수-3개보다 작으면 안됨. D가 embedding_size 
         x = self.padding(x)
         x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1] #[(N,Co,W), ...]*len(Ks)
         x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x] #[(N,Co), ...]*len(Ks)
@@ -140,18 +142,15 @@ class Siamese_CNN(nn.Module):
 
     def siamese(self, x):
         x = self.embed(x) # (N,W,D)
-        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어수(윈도우수)- 3개보다 작으면 에러남, D가 embedding_size 
-        x = x.permute(0,3,2,1) # (N,D,W,Ci) # 이렇게 바꿔두자.
+        x = x.unsqueeze(1) # (N,Ci,W,D) # N 은 뱃치수, Ci 가 채널수, W 가 단어 윈도우수-3개보다 작으면 안됨. D가 embedding_size
+        x = x.permute(0,3,2,1) # (N,D,W,Ci) 
         if x.size(2)>self.max_sequence_length:
             x=x[:,:,:self.max_sequence_length,:]
         while (x.size(2)<self.max_sequence_length):
              x = self.sentence_pad(x)
     
-        #print(x.size())
         out = self.layer1(x)
-        #print(out.size())
         out = self.layer2(out)
-        #print(out.size())
         out = out.view(out.size(0), -1)
         
         return out
@@ -319,13 +318,13 @@ class AttnDecoderRNN(nn.Module):
         context = torch.bmm(attn_weights, encoder_outputs_max)
         
         output = torch.cat((embeds, context), 2)
-        output = F.relu(self.W_C(output)) # eq(5)
+        output = F.relu(self.W_C(output))
         
         output, hidden = self.lstm(output, hidden)
         
         # Decode hidden state of last time step
         if train:
-            output = self.fc(self.dropout(output[:, -1, :])) # eq (6)
+            output = self.fc(self.dropout(output[:, -1, :]))
         else:
             output = self.fc(output[:, -1, :])
 

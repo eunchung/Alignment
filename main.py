@@ -15,23 +15,22 @@ from models import *
 # Hyper Parameters
 max_sequence_length = 30
 max_vocabulary_size = 25000
-embedding_size = 300 #int(sys.argv[6]) #300
+embedding_size = 300
 hidden_size = int(sys.argv[6])#256
 num_layers = 2
 num_classes = 2
 batch_size = 150
 num_epochs = 30
-learning_rate = 0.001 #float(sys.argv[6]) #0.003
+learning_rate = 0.001
 dropout_rate = float(sys.argv[7]) #0
 
 train_data_path = sys.argv[1]
 valid_data_path = sys.argv[2]
 test_data_path = sys.argv[3] 
-directory_name = sys.argv[4] #'171218'
+directory_name = sys.argv[4] #'Twit_CNN'
 model_name = sys.argv[5] #'CNN'
 
 word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=False)
-#word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=True)
 
 def model(x):
     return {
@@ -44,7 +43,7 @@ def model(x):
 
 model = model(model_name)
 model.cuda()
-#print(model)
+print(model)
 
 if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM'] :
     train_dataset = AlignmentDataset(train_data_path, word_to_ix, batch_size)

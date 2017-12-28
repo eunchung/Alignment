@@ -1,5 +1,4 @@
 import sys
-import numpy as np
 from sklearn.model_selection import train_test_split
 
 output_train = 'train_' + sys.argv[1]
@@ -16,7 +15,6 @@ toktok = ToktokTokenizer()
 
 import unicodedata
 import string
-import math
 
 # 윈도우에서 스패인어 보기 위해.
 # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427
@@ -27,7 +25,6 @@ def unicodeToAscii(s):
         if unicodedata.category(c) != 'Mn'
         and c in all_letters
     )
-
 
 def clean_tweet(tweet):
     '''

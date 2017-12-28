@@ -1,15 +1,6 @@
 import sys
-import numpy as np
-from sklearn.model_selection import train_test_split
-
-import re
-import nltk
-from nltk.tokenize.toktok import ToktokTokenizer
-toktok = ToktokTokenizer()
-
 import unicodedata
 import string
-import math
 
 # 윈도우에서 스패인어 보기 위해.
 # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427

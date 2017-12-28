@@ -15,25 +15,24 @@ from models import *
 # Hyper Parameters
 max_sequence_length = 50
 max_vocabulary_size = 25000
-embedding_size = 300 #int(sys.argv[6]) #300
+embedding_size = 300
 hidden_size = int(sys.argv[6])#256
 num_layers = 1
 batch_size = 150
 num_epochs = 50
-learning_rate = 0.001 #float(sys.argv[6]) #0.003
+learning_rate = 0.001
 dropout_rate = float(sys.argv[7]) #0
 teacher_forcing_ratio = float(sys.argv[8]) #0.5
 
 train_data_path = sys.argv[1]
 valid_data_path = sys.argv[2] 
 test_data_path = sys.argv[3] # test_twitter.txt
-directory_name = sys.argv[4] #'171218gen'
+directory_name = sys.argv[4] #'twit_gen'
 
 encoder_name = 'ENC'
 decoder_name = sys.argv[5] #'DEC'
 
 word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=False)
-#word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=True)
 num_classes = vocab_size
 
 encoder = EncoderRNN(vocab_size, embedding_size, hidden_size, num_layers, 2, dropout_rate)
@@ -47,7 +46,7 @@ decoder = decoder.cuda()
 print(encoder)
 print(decoder)
 
-if decoder_name == 'AE': #autoencoder
+if decoder_name == 'AE': #for autoencoder
     train_dataset = GenerateDataset_AE(train_data_path, word_to_ix, batch_size)
     valid_dataset = GenerateDataset_AE(valid_data_path, word_to_ix, 1)
     test_dataset = GenerateDataset_AE(test_data_path, word_to_ix, 1)
@@ -124,7 +123,7 @@ def train(input_variable, target_variable, batch_size, encoder, decoder, encoder
 
 def evaluate(encoder, decoder, input_variable):
     encoder_outputs, encoder_hidden = encoder(input_variable, train=False)
-    #max_sequence_length = encoder_outputs.size(1) # for simple dot product
+    #max_sequence_length = encoder_outputs.size(1) # for attention-simple dot product mode
     
     SOS_token = 0
     decoder_input = Variable(torch.LongTensor([[SOS_token]]))
@@ -257,6 +256,7 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_generation.txt'%
     torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_last_epoch.pkl' % (encoder_name,  hidden_size, dropout_rate, teacher_forcing_ratio))
     torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_last_epoch.pkl' % (decoder_name,  hidden_size, dropout_rate, teacher_forcing_ratio))
     w.write('-'*100+'\n\n')
+
 
 # load the best valid model.
 best_valid_epoch = 5

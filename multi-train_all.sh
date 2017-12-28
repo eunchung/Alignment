@@ -15,17 +15,9 @@ echo model_name: $model_name
 # read test_data
 # echo test_data: $test_data
 
-#train_data=train_textbook.txt
-#valid_data=valid_textbook.txt
-#test_data=test_textbook.txt
-
 train_data=train_WD_0.10_aug_train_all.txt
 valid_data=valid_WD_0.10_aug_train_all.txt
 test_data=test_all.txt
-
-#train_data=train_all.txt
-#valid_data=valid_all.txt
-#test_data=test_all.txt
 
 echo -n "type [directory name]: "
 read directory_name

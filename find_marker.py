@@ -24,9 +24,9 @@ learning_rate = 0.001
 dropout_rate = float(sys.argv[6]) #0
 
 train_data_path = 'train_WD_0.10_aug_train_twitter.txt' 
-unlabeled_data_path = sys.argv[1]  # preprocessed_10000unlabeled.txt
-directory_name = sys.argv[2] #'171218marker'
-accuracy = float(sys.argv[3]) # 81.00
+unlabeled_data_path = sys.argv[1]  # preprocessed_50000unlabeled.txt
+directory_name = sys.argv[2] #'twit_marker'
+accuracy = float(sys.argv[3]) # 77.00
 model_name = sys.argv[4] #'CNN'
 
 word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, character=False)
