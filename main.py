@@ -120,11 +120,12 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
                     keep_valid_accuracy = valid_accuracy
                 # if valid_loss < keep_valid_loss:
                 #     keep_valid_loss = valid_loss
-                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate))
-                    print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <saved model>' 
+                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
+                    print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <best valid>' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
 
-                else: 
+                else:
+                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
                     print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %%' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))
                 losses = 0
@@ -173,11 +174,12 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
                     keep_valid_accuracy = valid_accuracy
                 # if valid_loss < keep_valid_loss:
                 #     keep_valid_loss = valid_loss
-                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate))
-                    print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <saved model>' 
+                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
+                    print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <best valid>' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
 
-                else: 
+                else:
+                    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
                     print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %%' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))
                 losses = 0
@@ -224,7 +226,7 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.txt' % (model_na
     w.write('[setting]: '+'\tbatch_size\t'+str(batch_size)+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
     w.write('[Test Accuracy of the model]: %0.2f %% \n' % (100 * correct / total)) 
     w.write('[saved to]: ./models/%s_hid%d_D%0.2f_Acc%0.2f.pkl\n' % (model_name, hidden_size, dropout_rate, 100 * correct / total))
-    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, hidden_size, dropout_rate, 100 * correct / total))
+    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_last_epoch.pkl' % (model_name, hidden_size, dropout_rate, 100 * correct / total))
     
     for miss in missed_pairs:
         w.write(miss)
@@ -235,7 +237,8 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.txt' % (model_na
 correct = 0
 total = 0
 missed_pairs = []
-model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate)))
+best_valid_epoch = 10
+model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, best_valid_epoch)))
 if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM']:
     for sentence, label in test_loader:
 
@@ -268,6 +271,7 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accur
     w.write('[setting]: '+'\tbatch_size\t'+str(batch_size)+'\temb_size\t'+str(embedding_size)+'\tHid\t'+str(hidden_size)+'\tD\t'+str(dropout_rate)+'\n')
     w.write('[Test Accuracy of the model]: %0.2f %% \n' % (100 * correct / total)) 
     w.write('[saved to]: ./models/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accuracy.pkl\n' % (model_name, hidden_size, dropout_rate, 100 * correct / total))
+    torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, 100 * correct / total))
     
     for miss in missed_pairs:
         w.write(miss)

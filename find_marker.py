@@ -23,7 +23,7 @@ num_epochs = 30
 learning_rate = 0.001
 dropout_rate = float(sys.argv[6]) #0
 
-train_data_path = 'train_500samples.txt' 
+train_data_path = 'train_WD_0.10_aug_train_twitter.txt' 
 unlabeled_data_path = sys.argv[1]  # preprocessed_10000unlabeled.txt
 directory_name = sys.argv[2] #'171218marker'
 accuracy = float(sys.argv[3]) # 81.00
@@ -34,15 +34,16 @@ word_to_ix, ix_to_word, vocab_size = make_or_load_dict(train_data_path, characte
 def model(x):
     return {
         'BiLSTM': BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
-        'CNN': CNN(vocab_size, embedding_size, num_classes, dropout_rate),
-        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, dropout_rate),
+        'CNN': CNN(vocab_size, embedding_size, num_classes, dropout_rate, kernel_num=hidden_size),
+        'Cha_CNN_LSTM': Cha_CNN_LSTM(vocab_size, embedding_size, num_classes, dropout_rate, kernel_num =hidden_size),
         'Siamese_BiLSTM': Siamese_BiLSTM(vocab_size, embedding_size, hidden_size, num_layers, num_classes, dropout_rate),
-        'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size),
+        'Siamese_CNN': Siamese_CNN(vocab_size, num_classes, embedding_size, kernel_num = hidden_size),
     }.get(x)
 
 model = model(model_name)
 model.cuda()
-model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, hidden_size, dropout_rate, accuracy)))
+model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, accuracy)))
+#model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.pkl' % (model_name, hidden_size, dropout_rate, accuracy)))
 print(model)
 
 # Predict whether tweet-reply pair is alignment or not
@@ -66,17 +67,17 @@ with open(unlabeled_data_path,'r', encoding = 'utf-8') as tweet, \
         sentence_1_origin, sentence_2_origin, _ = sentences.lower().strip().split('\t')
         
         if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM']:
-            sentence_concat = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1_origin+' '+sentence_2_origin)))
+            sentence_concat = (sentence_1_origin+' '+sentence_2_origin).split()
             sentence_concat = prepare_sequence(sentence_concat, word_to_ix)
 
             outputs = model(Variable(sentence_concat.view(batch_size, -1)).cuda(), train=False)
             _, predicted = torch.max(outputs.data, 1) # 두번째 아웃풋 값은 argmax 를 반환
 
         elif model_name in ['Siamese_BiLSTM','Siamese_CNN']:
-            sentence_1 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_1_origin)))
+            sentence_1 = sentence_1_origin.split()
             sentence_1 = prepare_sequence(sentence_1, word_to_ix)
 
-            sentence_2 = toktok.tokenize(' '.join(nltk.word_tokenize(sentence_2_origin)))
+            sentence_2 = sentence_2_origin.split()
             sentence_2 = prepare_sequence(sentence_2, word_to_ix)
 
             output = model(Variable(sentence_1.view(batch_size, -1)).cuda(), Variable(sentence_2.view(batch_size, -1)).cuda(), train=False)
@@ -95,7 +96,7 @@ from collections import Counter
 counts = Counter()
 align_count = 0
 with open('./result/'+directory_name+'/Align_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as r_align, \
-    open('./result/'+directory_name+'/%s_%s_Align_marker_%0.2f.txt'%(model_name, align_count, accuracy), 'w', encoding = 'utf-8') as w_align:
+    open('./result/'+directory_name+'/%s_Align_marker_%0.2f.txt'%(model_name, accuracy), 'w', encoding = 'utf-8') as w_align:
     for line in r_align.readlines():
         counts.update(line.rstrip().split())
         align_count += 1
@@ -109,7 +110,7 @@ with open('./result/'+directory_name+'/Align_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(mode
 counts_none = Counter()
 none_count = 0
 with open('./result/'+directory_name+'/None_%s_hid%d_D%0.2f_Acc%0.2f.txt'%(model_name, hidden_size, dropout_rate, accuracy), 'r', encoding = 'utf-8') as r_none, \
-    open('./result/'+directory_name+'/%s_%s_None_marker_%0.2f.txt'%(model_name, none_count, accuracy), 'w', encoding = 'utf-8') as w_none:
+    open('./result/'+directory_name+'/%s_None_marker_%0.2f.txt'%(model_name, accuracy), 'w', encoding = 'utf-8') as w_none:
     for line in r_none.readlines():
         counts_none.update(line.rstrip().split())
         none_count +=1
