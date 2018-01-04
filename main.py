@@ -119,6 +119,7 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
                     keep_valid_accuracy = valid_accuracy
                 # if valid_loss < keep_valid_loss:
                 #     keep_valid_loss = valid_loss
+                    best_valid_epoch = epoch + 1
                     torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
                     print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <best valid>' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
@@ -173,6 +174,7 @@ for epoch in range(num_epochs):  # again, normally you would NOT do 300 epochs, 
                     keep_valid_accuracy = valid_accuracy
                 # if valid_loss < keep_valid_loss:
                 #     keep_valid_loss = valid_loss
+                    best_valid_epoch = epoch + 1 
                     torch.save(model.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, (epoch+1)))
                     print ('Ep [%d/%d], Step [%d/%d], L: %.4f, V_L: %.4f, V_ACC: %0.2f %%, Te_L: %.4f, Te_ACC: %0.2f %% <best valid>' 
                        %(epoch+1, num_epochs, (i+1)+epoch*len(train_dataset), num_epochs*len(train_dataset), losses, valid_loss, valid_accuracy, test_loss, test_accuracy))   
@@ -236,7 +238,7 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f.txt' % (model_na
 correct = 0
 total = 0
 missed_pairs = []
-best_valid_epoch = 10
+#best_valid_epoch = 10
 model.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_epoch_%d_best_valid_accuracy.pkl' % (model_name, hidden_size, dropout_rate, best_valid_epoch)))
 if model_name in ['BiLSTM','CNN','Cha_CNN_LSTM']:
     for sentence, label in test_loader:

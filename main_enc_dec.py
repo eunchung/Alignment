@@ -211,6 +211,7 @@ for epoch in range(num_epochs):
                 
             if valid_loss < keep_valid_loss:
                 keep_valid_loss = valid_loss
+                best_valid_epoch = epoch + 1 
                 torch.save(encoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
                 torch.save(decoder.state_dict(), './models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, (epoch+1)))
                 
@@ -262,7 +263,7 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_generation.txt'%
 
 
 # load the best valid model.
-best_valid_epoch = 5
+#best_valid_epoch = 5
 encoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (encoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
 decoder.load_state_dict(torch.load('./models/'+directory_name+'/%s_hid%d_D%0.2f_tfr%0.1f_epoch_%d_best_valid_loss.pkl' % (decoder_name, hidden_size, dropout_rate, teacher_forcing_ratio, best_valid_epoch)))
 
