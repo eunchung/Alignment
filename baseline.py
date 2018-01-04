@@ -33,6 +33,7 @@ def marker_set(x):
         'd5': ['de', 'que', 'a', 'la', 'y', 'no', 'el', 'en', 'es', 'los', 'por', 'lo', 'un', 'se', 'con', 'me', 'si', 'te', 'para', 'del', \
                 'una','las','mi','pero','al','más','le','como','ya','yo','q','todo','gracias','su','todos','son','esto','este','qué','hay',\
                 'nos','tu','o','esta','hoy','muy','ha','eso','ni','porque'],
+        'differ':['yo','todo','gracias','esto','nos','muy','eso','ni'],
     }.get(x)
 
 alignment_markers = marker_set(alignment_marker_type)
