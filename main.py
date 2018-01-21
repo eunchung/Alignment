@@ -277,3 +277,4 @@ with open('./result/'+directory_name+'/%s_hid%d_D%0.2f_Acc%0.2f_best_valid_accur
     for miss in missed_pairs:
         w.write(miss)
     w.write('-'*100+'\n\n')
+    
